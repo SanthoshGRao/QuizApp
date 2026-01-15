@@ -3,10 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <script>
-      // GitHub Pages SPA redirect
-      var path = window.location.pathname;
-      var base = "/QuizApp/";
-      window.location.replace(base + "#" + path.replace(base, ""));
+      (function () {
+        var base = "/QuizApp/";
+        var pathname = window.location.pathname;
+        var search = window.location.search || "";
+        var hash = window.location.hash || "";
+
+        // Remove base path from pathname
+        var route = pathname.startsWith(base)
+          ? pathname.slice(base.length)
+          : pathname;
+
+        // Redirect to hash-based route
+        window.location.replace(
+          base + "#/" + route.replace(/^\/+/, "") + search + hash
+        );
+      })();
     </script>
   </head>
   <body></body>
