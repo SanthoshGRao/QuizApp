@@ -9,12 +9,10 @@
         var search = window.location.search || "";
         var hash = window.location.hash || "";
 
-        // Remove base path from pathname
         var route = pathname.startsWith(base)
           ? pathname.slice(base.length)
           : pathname;
 
-        // Redirect to hash-based route
         window.location.replace(
           base + "#/" + route.replace(/^\/+/, "") + search + hash
         );
