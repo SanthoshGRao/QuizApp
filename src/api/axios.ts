@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-   baseURL: "https://quizapp-backend.onrender.com/api",
+   baseURL: "https://quizapp-backend-e6yh.onrender.com/api",
 });
 
 api.interceptors.request.use((config) => {
