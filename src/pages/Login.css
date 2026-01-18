@@ -1,0 +1,467 @@
+/* ===============================
+   LOGIN PAGE BACKGROUND
+================================ */
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(
+    135deg,
+    #0f172a,
+    #020617
+  );
+
+  overflow: hidden;
+}
+
+/* Subtle particles */
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    radial-gradient(circle, rgba(99,102,241,0.15) 1px, transparent 1px);
+  background-size: 50px 50px;
+
+  opacity: 0.3;
+}
+
+/* ===============================
+   LOGIN CARD
+================================ */
+.login-card {
+  position: relative;
+  z-index: 1;
+
+  width: 380px;
+  padding: 36px 32px;
+
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.6);
+
+  text-align: center;
+}
+
+/* ===============================
+   TEXT
+================================ */
+.login-card h2 {
+  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #c7d2fe;
+  margin-bottom: 28px;
+}
+
+/* ===============================
+   INPUTS
+================================ */
+.login-card input {
+  width: 100%;
+  margin-bottom: 14px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.15);
+  color: white;
+
+  font-size: 14px;
+}
+
+.login-card input::placeholder {
+  color: #cbd5f5;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.3);
+}
+
+/* ===============================
+   BUTTON
+================================ */
+.login-card button {
+  width: 100%;
+  margin-top: 10px;
+
+  padding: 12px;
+  border-radius: 12px;
+
+  background: linear-gradient(
+    90deg,
+    #6366f1,
+    #4f46e5
+  );
+
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+
+  border: none;
+  cursor: pointer;
+
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-card button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(99,102,241,0.5);
+}
+
+/* ===============================
+   ERROR
+================================ */
+.login-error {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #fecaca;
+}
+/* ===============================
+   LOADING STATE
+================================ */
+.login-card button.loading {
+  pointer-events: none;
+  opacity: 0.85;
+  position: relative;
+}
+
+.login-card button.loading::after {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+/* ===============================
+   RESET PASSWORD
+================================ */
+
+
+.reset-card h2 {
+  margin-bottom: 10px;
+}
+
+.reset-hint {
+  font-size: 13px;
+  color: #c7d2fe;
+  margin-bottom: 20px;
+}
+
+/* ===============================
+   PARTICLE MOTION
+================================ */
+.login-page::before {
+  animation: drift 60s linear infinite;
+}
+
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 400px 400px;
+  }
+}
+
+/* ===============================
+   SUBTLE GLASS TUNING
+================================ */
+
+/* Lighten the card slightly */
+.login-card {
+  background: rgba(255, 255, 255, 0.09); /* was 0.12 */
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.45); /* softer shadow */
+}
+
+/* ===============================
+   PARTICLE BRIGHTNESS BOOST
+================================ */
+
+.login-page::before {
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(129,140,248,0.28) 1px,  /* brighter dots */
+      transparent 1px
+    );
+
+  opacity: 0.45; /* was 0.3 */
+}
+
+/* ===============================
+   PARTICLE BRIGHTNESS BOOST
+================================ */
+
+.login-page::before {
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(129,140,248,0.28) 1px,  /* brighter dots */
+      transparent 1px
+    );
+
+  opacity: 0.45; /* was 0.3 */
+}
+/* ===============================
+   LOGIN SUCCESS
+================================ */
+.login-card.success {
+  animation: successFade 0.6s ease forwards;
+}
+
+@keyframes successFade {
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+}
+
+/* ===============================
+   PASSWORD TOGGLE
+================================ */
+.toggle-eye {
+  position: absolute;
+  right: 14px;
+  top: 40%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  color: #e0e7ff;
+}
+
+.toggle-eye:hover {
+  color: #ffffff;
+}
+
+/* ===============================
+   ERROR MESSAGE
+================================ */
+.login-error {
+  margin-top: 14px;
+  margin-bottom: 6px;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #fecaca;
+
+  text-align: center;
+}
+
+/* ===============================
+   FORGOT PASSWORD (IMPROVED)
+================================ */
+.forgot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 10px;
+  padding: 6px 14px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #c7d2fe;
+  
+  background: rgba(99, 102, 241, 0.12);
+
+  border-radius: 999px; /* pill shape */
+  text-decoration: none;
+
+  transition: 
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.forgot-link:hover {
+  background: rgba(99, 102, 241, 0.22);
+  color: #ffffff;
+
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+
+.forgot-link:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.login-error-text {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #fca5a5;
+  text-align: center;
+}
+.login-error-text {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #fca5a5;
+  text-align: center;
+}
+
+/* ===============================
+   BUTTON LOADER
+================================ */
+button:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-success {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #bbf7d0;
+}
+.success-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.checkmark {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 14px;
+  animation: pop 0.4s ease forwards;
+}
+
+.success-text {
+  color: #bbf7d0;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.4;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===============================
+   ANIMATED WAVES BACKGROUND
+================================ */
+
+.login-page::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+
+  background:
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(99,102,241,0.25),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(56,189,248,0.18),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(139,92,246,0.18),
+      transparent 50%
+    );
+
+  animation: waveMove 18s ease-in-out infinite alternate;
+  z-index: 0;
+}
+@keyframes waveMove {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-40px) translateX(30px);
+  }
+  100% {
+    transform: translateY(20px) translateX(-20px);
+  }
+}
+
+.login-success{
+  color: #94a3b8;
+}
