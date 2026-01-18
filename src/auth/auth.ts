@@ -6,8 +6,8 @@ export const getRole = () => {
   return localStorage.getItem("role");
 };
 
-export const logout = () => {
+export const logout = (navigate: (path: string) => void) => {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
-  window.location.href = "/";
+  navigate("/");
 };

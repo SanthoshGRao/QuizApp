@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { login } from "../api/auth";
 import "./Login.css";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
+
 
 function Login() {
 
@@ -9,37 +13,40 @@ function Login() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const data = await login(email, password);
-      localStorage.setItem("name", data.user.name);
+  try {
+    const data = await login(email, password);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
-      localStorage.setItem(
-        "mustChangePassword",
-        String(data.user.mustChangePassword)
-      );
+    localStorage.setItem("name", data.user.name);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.user.role);
+    localStorage.setItem(
+      "mustChangePassword",
+      String(data.user.mustChangePassword)
+    );
 
-      if (data.user.mustChangePassword) {
-        window.location.href = "/reset-password";
-        return;
-      }
-
-      window.location.href =
-        data.user.role === "ADMIN" ? "/admin" : "/student";
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
+    if (data.user.mustChangePassword) {
+      navigate("/reset-password", { replace: true });
+      return;
     }
-  };
+
+    navigate(
+      data.user.role === "ADMIN" ? "/admin" : "/student",
+      { replace: true }
+    );
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="login-page">
@@ -85,9 +92,9 @@ function Login() {
 
 
 
-        <a href="/forgot-password" className="forgot-link">
+        <Link to="/forgot-password" className="forgot-link">
           Forgot password?
-        </a>
+        </Link>
 
       </div>
     </div>

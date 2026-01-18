@@ -37,13 +37,20 @@ export const updateQuestion = async (
   return res.data;
 };
 
-export const toggleQuizPublish = async (
+export const publishQuiz = async (
   quizId: number,
-  is_active: boolean
+  data: {
+    targetClass: string;
+    publishAt: string;
+  }
 ) => {
-  const res = await api.patch(`/admin/quiz/${quizId}/publish`, { is_active });
+  const res = await api.patch(
+    `/admin/quiz/${quizId}/publish`,
+    data
+  );
   return res.data;
 };
+
 
 export const deleteQuestion = async (id: number) => {
   const res = await api.delete(`/admin/question/${id}`);

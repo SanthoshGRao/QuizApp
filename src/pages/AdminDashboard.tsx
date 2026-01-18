@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     fetchQuizzes,
     createQuiz,
     addQuestion,
     fetchQuestions,
     updateQuestion,
-    toggleQuizPublish,
+    publishQuiz,
     deleteQuestion,
     deleteQuiz,
 } from "../api/admin";
 import { logout } from "../auth/auth";
 import "./AdminDashboard.css";
 import api from "../api/axios";
+
 
 interface Quiz {
     id: number;
@@ -29,7 +31,8 @@ interface Question {
     option_d: string;
 }
 
-type View = "DASHBOARD" | "QUIZZES" | "CREATE" | "STUDENTS";
+type View = "DASHBOARD" | "QUIZZES" | "CREATE" | "STUDENTS" | "LOGS";
+
 
 
 export default function AdminDashboard() {
@@ -46,16 +49,54 @@ export default function AdminDashboard() {
     const [questionText, setQuestionText] = useState("");
     const [options, setOptions] = useState<string[]>(["", "", "", ""]);
     const [correctOption, setCorrectOption] = useState("");
+    const [uploading, setUploading] = useState(false);
+    const [bulkFile, setBulkFile] = useState<File | null>(null);
+    const [bulkResult, setBulkResult] = useState<any[] | null>(null);
+    const [studentClass, setStudentClass] = useState("");
 
     const [studentName, setStudentName] = useState("");
     const [studentEmail, setStudentEmail] = useState("");
 
+    const [showPublishModal, setShowPublishModal] = useState(false);
+    const [publishClass, setPublishClass] = useState("");
+    const [publishAt, setPublishAt] = useState("");
+    const [publishQuizId, setPublishQuizId] = useState<number | null>(null);
+
+    const [logs, setLogs] = useState<any[]>([]);
+    const [logFilter, setLogFilter] = useState<"ALL" | "SUCCESS" | "FAILED" | "INFO">("ALL");
+    const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
+    const [search, setSearch] = useState("");
+
+    const navigate = useNavigate();
+
+    const getQuizStatus = (quiz: any) => {
+        if (!quiz.publish_at) return "Draft";
+
+        const now = new Date();
+        const publishAt = new Date(quiz.publish_at);
+        const visibleUntil = new Date(quiz.visible_until);
+
+        if (now < publishAt) return `Scheduled (${publishAt.toLocaleString()})`;
+        if (now > visibleUntil) return "Expired";
+
+        return "Live";
+    };
 
     /* ---------------- LOADERS ---------------- */
     const loadQuizzes = async () => {
         const data = await fetchQuizzes();
         setQuizzes(data);
     };
+    const loadLogs = async () => {
+        try {
+            const res = await api.get("/auth/logs");
+            setLogs(res.data);
+        } catch (err) {
+            console.error("Failed to load logs", err);
+        }
+    };
+
+
 
     const loadQuestions = async (quizId: number) => {
         const data = await fetchQuestions(quizId);
@@ -69,10 +110,19 @@ export default function AdminDashboard() {
     /* ---------------- HANDLERS ---------------- */
     const handleCreateQuiz = async () => {
         if (!newQuizTitle.trim()) return;
-        await createQuiz(newQuizTitle);
-        setNewQuizTitle("");
-        await loadQuizzes();
+
+        try {
+            await createQuiz(newQuizTitle);
+            setNewQuizTitle("");
+            await loadQuizzes();
+
+            // ✅ POPUP MESSAGE
+            alert("Quiz created successfully (saved as Draft)");
+        } catch (error) {
+            alert("Failed to create quiz");
+        }
     };
+
 
     const handleSelectQuiz = async (quiz: Quiz) => {
         setSelectedQuiz(quiz);
@@ -83,21 +133,27 @@ export default function AdminDashboard() {
         await loadQuestions(quiz.id);
     };
 
-    const handleTogglePublish = async (quiz: Quiz) => {
-        await toggleQuizPublish(quiz.id, !quiz.is_active);
-        await loadQuizzes();
-    };
     const handleAddStudent = async () => {
         if (!studentName || !studentEmail) return;
 
-        await api.post("/admin/students", {
-            name: studentName,
-            email: studentEmail,
-        });
+        try {
+            await api.post("/admin/students", {
+                name: studentName,
+                email: studentEmail,
+                class: studentClass,
+            });
 
-        setStudentName("");
-        setStudentEmail("");
-        alert("Student added");
+
+            setStudentName("");
+            setStudentEmail("");
+            setStudentClass("");
+            alert("Student added successfully");
+        } catch (err: any) {
+            const msg =
+                err.response?.data?.message || "Failed to add student";
+
+            alert(msg);
+        }
     };
 
 
@@ -141,6 +197,39 @@ export default function AdminDashboard() {
         setOptions([q.option_a, q.option_b, q.option_c, q.option_d]);
         setCorrectOption("");
     };
+    const filteredLogs = logs.filter((log) => {
+  const searchText = search.toLowerCase();
+
+  const matchesSearch =
+  !searchText ||
+  log.action?.toLowerCase().includes(searchText) ||
+  log.message?.toLowerCase().includes(searchText) ||
+  log.status?.toLowerCase().includes(searchText) ||
+
+  // 👇 student-related
+  log.metadata?.name?.toLowerCase().includes(searchText) ||
+  log.metadata?.email?.toLowerCase().includes(searchText) ||
+  log.metadata?.class?.toLowerCase().includes(searchText) ||
+
+  // 👇 quiz-related (THIS WAS MISSING)
+  log.metadata?.title?.toLowerCase().includes(searchText);
+
+
+  const matchesStatus =
+    logFilter === "ALL" || log.status === logFilter;
+
+  return matchesSearch && matchesStatus;
+});
+
+    const groupedLogs = filteredLogs.reduce((acc: any, log: any) => {
+  const dateKey = new Date(log.created_at).toLocaleDateString();
+
+  if (!acc[dateKey]) acc[dateKey] = [];
+  acc[dateKey].push(log);
+
+  return acc;
+}, {});
+
 
     /* ---------------- UI ---------------- */
     return (
@@ -178,10 +267,18 @@ export default function AdminDashboard() {
                 >
                     Students
                 </button>
-
+                <button
+                    className={view === "LOGS" ? "active" : ""}
+                    onClick={() => {
+                        setView("LOGS");
+                        loadLogs();
+                    }}
+                >
+                    Logs
+                </button>
 
                 <div className="spacer" />
-                <button className="logout" onClick={logout}>
+                <button className="logout" onClick={() => logout(navigate)}>
                     Logout
                 </button>
             </aside>
@@ -204,6 +301,13 @@ export default function AdminDashboard() {
                             onChange={(e) => setStudentEmail(e.target.value)}
                         />
 
+                        <input
+                            placeholder="Class"
+                            value={studentClass}
+                            onChange={(e) => setStudentClass(e.target.value)}
+                        />
+
+
                         <p className="muted">
                             Default password will be the student’s name
                         </p>
@@ -211,6 +315,80 @@ export default function AdminDashboard() {
                         <button onClick={handleAddStudent}>
                             Add Student
                         </button>
+                        <hr style={{ margin: "24px 0" }} />
+
+                        <h3>Bulk Upload Students</h3>
+
+                        <p className="muted">
+                            Upload a CSV or Excel file containing <b>name</b> and <b>email</b>
+                        </p>
+
+                        <div className="bulk-upload-box">
+                            <label className="file-picker">
+                                <input
+                                    type="file"
+                                    accept=".csv,.xlsx"
+                                    hidden
+                                    disabled={uploading}
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            setBulkFile(e.target.files[0]);
+                                        }
+                                    }}
+                                />
+
+                                <span className="file-picker-btn">
+                                    <i className="fa-solid fa-file-arrow-up" />
+                                    Choose File
+                                </span>
+                            </label>
+
+                            <span className="file-name">
+                                {bulkFile ? bulkFile.name : "No file selected"}
+                            </span>
+                        </div>
+
+                        <button
+                            className="primary"
+                            disabled={!bulkFile || uploading}
+                            style={{ marginTop: 16 }}
+                            onClick={async () => {
+                                if (!bulkFile) return;
+
+                                const formData = new FormData();
+                                formData.append("file", bulkFile);
+
+                                try {
+                                    setUploading(true);
+
+                                    const res = await api.post(
+                                        "/admin/students/bulk",
+                                        formData,
+                                        {
+                                            headers: {
+                                                "Content-Type": "multipart/form-data",
+                                            },
+                                        }
+                                    );
+
+                                    setBulkResult(res.data.results);
+                                    setBulkFile(null);
+
+                                } catch (err: any) {
+                                    alert(err.response?.data?.message || "Bulk upload failed");
+                                } finally {
+                                    setUploading(false);
+                                }
+                            }}
+                        >
+                            {uploading ? "Uploading…" : "Upload Students"}
+                        </button>
+
+                        <p className="hint">
+                            Supported formats: <b>.csv</b>, <b>.xlsx</b>
+                        </p>
+
+
                     </div>
                 )}
 
@@ -261,31 +439,28 @@ export default function AdminDashboard() {
                                         >
                                             <div className="quiz-info">
                                                 <h4>{q.title}</h4>
-                                                <span>{q.is_active ? "Published" : "Draft"}</span>
+                                                <span className={`quiz-status ${getQuizStatus(q).toLowerCase()}`}>
+                                                    {getQuizStatus(q)}
+                                                </span>
+
                                             </div>
 
                                             <div className="quiz-actions">
-                                                {!q.is_active && (
+                                                {getQuizStatus(q) === "Draft" && (
                                                     <button
                                                         className="secondary"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-
-                                                            const confirmPublish = window.confirm(
-                                                                "⚠️ Publishing is final.\n\n" +
-                                                                "• You cannot edit questions\n" +
-                                                                "• You cannot delete this quiz\n\n" +
-                                                                "Do you want to publish?"
-                                                            );
-
-                                                            if (!confirmPublish) return;
-
-                                                            handleTogglePublish(q);
+                                                            setPublishQuizId(q.id);
+                                                            setPublishClass("");
+                                                            setPublishAt("");
+                                                            setShowPublishModal(true);
                                                         }}
                                                     >
                                                         Publish
                                                     </button>
                                                 )}
+
 
 
                                                 {!q.is_active && !q.has_submissions && (
@@ -423,6 +598,286 @@ export default function AdminDashboard() {
                     )}
 
                 </div>
+                {view === "LOGS" && (
+                    <div className="logs-page">
+                        {/* HEADER */}
+                        <div className="logs-header">
+                            <div>
+                                <h2>System Logs</h2>
+                                <p className="logs-subtitle">
+                                    All admin and system level activities
+                                </p>
+                            </div>
+                            <div className="logs-toolbar">
+                                <div className="logs-search-bar">
+                                    <svg
+                                        className="logs-search-icon"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg>
+
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Search by name, class, email, action or status"
+                                        className="logs-search-input"
+                                    />
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                        <div className="logs-card">
+                            {/* FILTERS */}
+                            <div className="log-filters">
+                                {["ALL", "SUCCESS", "FAILED", "INFO"].map((f) => (
+                                    <button
+                                        key={f}
+                                        className={`filter-pill ${logFilter === f ? "active" : ""}`}
+                                        onClick={() => setLogFilter(f as any)}
+                                    >
+                                        {f}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* LOG LIST */}
+                            {Object.keys(groupedLogs).length === 0 ? (
+                                <p className="muted">No logs found</p>
+                            ) : (
+                                Object.entries(groupedLogs).map(([date, logs]) => (
+                                    <div key={date} className="log-group">
+                                        <h4>{date}</h4>
+
+                                        {(logs as any[]).map((log) => (
+                                            <div
+                                                key={log.id}
+                                                className="log-row"
+                                                onClick={() =>
+                                                    setExpandedLogId(
+                                                        expandedLogId === log.id ? null : log.id
+                                                    )
+                                                }
+                                            >
+                                                {/* SINGLE LINE */}
+                                                <div className="log-line">
+                                                    <span className={`status-dot ${log.status.toLowerCase()}`} />
+
+                                                    <div className="log-main">
+                                                        <strong>{log.action}</strong>
+                                                        <span className="log-text">
+                                                            {log.metadata?.name ?? "System"} — {log.message}
+                                                        </span>
+                                                    </div>
+
+                                                    <span className="log-time">
+                                                        {new Date(log.created_at).toLocaleTimeString()}
+                                                    </span>
+                                                </div>
+
+                                                {/* EXPANDED */}
+                                                {expandedLogId === log.id && (
+                                                    <div className="log-expanded">
+                                                        <div className="log-detail-grid">
+                                                            <div>
+                                                                <span className="label">Action</span>
+                                                                <span className="value">{log.action}</span>
+                                                            </div>
+
+                                                            <div>
+                                                                <span className="label">Status</span>
+                                                                <span className={`value status ${log.status.toLowerCase()}`}>
+                                                                    {log.status}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                <span className="label">Actor</span>
+                                                                <span className="value">
+                                                                    {log.actor_role ?? "SYSTEM"}{" "}
+                                                                    {log.actor_id ? `(#${log.actor_id})` : ""}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                <span className="label">Target</span>
+                                                                <span className="value">
+                                                                    {log.target_type ?? "-"}{" "}
+                                                                    {log.target_id ? `(#${log.target_id})` : ""}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="full">
+                                                                <span className="label">Message</span>
+                                                                <span className="value">{log.message}</span>
+                                                            </div>
+
+                                                            {log.metadata && (
+                                                                <div className="full metadata">
+                                                                    <span className="label">Metadata</span>
+                                                                    <pre>{JSON.stringify(log.metadata, null, 2)}</pre>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+
+
+                {bulkResult && (
+                    <div className="modal-overlay">
+                        <div className="modal refined-modal">
+                            {/* HEADER */}
+                            <div className="modal-header">
+                                <h3>Bulk Upload Result</h3>
+                                <button
+                                    className="close-btn"
+                                    onClick={() => setBulkResult(null)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* SUMMARY */}
+                            <div className="modal-summary">
+                                <span className="success-badge">
+                                    ✓ {bulkResult.filter(r => r.status === "SUCCESS").length} Added
+                                </span>
+                                <span className="failed-badge">
+                                    ✕ {bulkResult.filter(r => r.status === "FAILED").length} Failed
+                                </span>
+                            </div>
+
+                            {/* LIST */}
+                            <div className="result-list refined-list">
+                                {bulkResult.map((r, i) => (
+                                    <div
+                                        key={i}
+                                        className={`result-row refined-row ${r.status === "SUCCESS" ? "success" : "failed"}`}
+                                    >
+                                        <div className="student-info">
+                                            <strong>{r.name}</strong>
+                                            <span className="email-text">{r.email}</span>
+                                        </div>
+
+                                        <span className={`status-pill ${r.status.toLowerCase()}`}>
+                                            {r.status === "SUCCESS" ? "Added" : r.reason}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* FOOTER */}
+                            <div className="modal-footer">
+                                <button
+                                    className="primary"
+                                    onClick={() => setBulkResult(null)}
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {showPublishModal && (
+                    <div className="modal-overlay">
+                        <div className="publish-modal">
+                            {/* Header */}
+                            <div className="publish-header">
+                                <h3>Publish Quiz</h3>
+                                <p className="publish-subtitle">
+                                    Choose who can access this quiz and when it becomes live
+                                </p>
+                            </div>
+
+                            {/* Form */}
+                            <div className="publish-form">
+                                {/* Class Selection */}
+                                <div className="form-group">
+                                    <label>Target Class</label>
+                                    <select
+                                        value={publishClass}
+                                        onChange={(e) => setPublishClass(e.target.value)}
+                                    >
+                                        <option value="">Select class</option>
+                                        <option value="6">Class 6</option>
+                                        <option value="7">Class 7</option>
+                                        <option value="8">Class 8</option>
+                                        <option value="9">Class 9</option>
+                                        <option value="10">Class 10</option>
+                                    </select>
+                                </div>
+
+                                {/* Date Time */}
+                                <div className="form-group">
+                                    <label>Publish Date & Time</label>
+
+                                    <div className="datetime-wrapper">
+                                        <input
+                                            type="datetime-local"
+                                            value={publishAt}
+                                            onChange={(e) => setPublishAt(e.target.value)}
+                                            className="datetime-input"
+                                        />
+                                    </div>
+
+                                    <span className="hint-text">
+                                        Quiz will be available for 1 hour from this time
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            {/* Footer */}
+                            <div className="publish-actions">
+                                <button
+                                    className="btn-secondary"
+                                    onClick={() => setShowPublishModal(false)}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    className="btn-primary"
+                                    disabled={!publishClass || !publishAt}
+                                    onClick={async () => {
+                                        if (!publishQuizId) return;
+
+                                        await publishQuiz(publishQuizId, {
+                                            targetClass: publishClass,
+                                            publishAt,
+                                        });
+
+                                        setShowPublishModal(false);
+                                        await loadQuizzes();
+                                    }}
+                                >
+                                    Schedule Quiz
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                )}
+
 
             </main>
         </div>

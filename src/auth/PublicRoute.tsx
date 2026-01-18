@@ -1,37 +1,16 @@
 import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { isLoggedIn, getRole } from "./auth";
 
 interface Props {
   children: ReactNode;
-  role?: "ADMIN" | "STUDENT";
 }
 
-function ProtectedRoute({ children, role }: Props) {
-  const location = useLocation();
-
+function PublicRoute({ children }: Props) {
   const isAuth = isLoggedIn();
-  const mustReset =
-    localStorage.getItem("mustChangePassword") === "true";
 
-  // 🚪 Not logged in → Login
-  if (!isAuth) {
-    return <Navigate to="/" replace />;
-  }
-
-  // 🔐 Force password reset (only once, safe)
-  if (
-    mustReset &&
-    !location.pathname.startsWith("/reset-password")
-  ) {
-    return <Navigate to="/reset-password" replace />;
-  }
-
-  // 🚫 Block reset page if reset already done
-  if (
-    !mustReset &&
-    location.pathname.startsWith("/reset-password")
-  ) {
+  // ✅ If already logged in → redirect away from login
+  if (isAuth) {
     const role = getRole();
     return (
       <Navigate
@@ -41,12 +20,8 @@ function ProtectedRoute({ children, role }: Props) {
     );
   }
 
-  // 🔒 Role-based access
-  if (role && getRole() !== role) {
-    return <Navigate to="/" replace />;
-  }
-
+  // ✅ Not logged in → allow access (Login page)
   return <>{children}</>;
 }
 
-export default ProtectedRoute;
+export default PublicRoute;

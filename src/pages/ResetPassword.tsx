@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import "./Login.css";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
 
 function ResetPassword() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token"); // 👈 VERY IMPORTANT
 
@@ -40,7 +42,7 @@ function ResetPassword() {
     localStorage.clear();
 
     setTimeout(() => {
-      window.location.href = "/";
+      navigate("/", { replace: true });
     }, 1500);
   } catch (err: any) {
     setError(err.response?.data?.message || "Password reset failed");

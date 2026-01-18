@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
 import "./Login.css";
 
 function ResetPasswordToken() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
@@ -16,7 +18,7 @@ function ResetPasswordToken() {
     const timer = setTimeout(() => {
       setError("Reset session expired. Please request a new link.");
       setTimeout(() => {
-        window.location.href = "/forgot-password";
+        navigate("/forgot-password", { replace: true });
       }, 2000);
     }, 10 * 60 * 1000); // 10 minutes
 
@@ -54,7 +56,7 @@ function ResetPasswordToken() {
       setSuccess("Password reset successful. Redirecting to login...");
 
       setTimeout(() => {
-        window.location.href = "/";
+        navigate("/", { replace: true });
       }, 1500);
     } catch (err: any) {
       const msg = err.response?.data?.message || "Password reset failed";
@@ -67,7 +69,7 @@ function ResetPasswordToken() {
 
         // ⏳ auto redirect after showing message
         setTimeout(() => {
-          window.location.href = "/forgot-password";
+          navigate("/forgot-password", { replace: true });
         }, 2500);
       } else {
         setError(msg);

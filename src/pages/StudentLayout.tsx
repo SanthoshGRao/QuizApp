@@ -1,10 +1,12 @@
 import { Outlet, NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { logout } from "../auth/auth";
 import "./StudentDashboard.css";
 
 export default function StudentLayout() {
   const userName = localStorage.getItem("name") || "Student";
   const userRole = localStorage.getItem("role") || "STUDENT";
+  const navigate = useNavigate();
 
   return (
     <div className="student-container">
@@ -28,7 +30,7 @@ export default function StudentLayout() {
 
         {/* Logout */}
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={logout}>
+          <button className="logout-btn" onClick={() => logout(navigate)}>
             <i className="fa-solid fa-right-from-bracket" />
             <span>Logout</span>
           </button>

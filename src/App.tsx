@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentQuiz from "./pages/StudentQuiz";
@@ -12,10 +12,9 @@ import StudentDashboard from "./pages/StudentDashboard";
 import StudentResults from "./pages/StudentResults";
 import StudentResultView from "./pages/StudentResultView";
 
-
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route
           path="/"
@@ -25,18 +24,10 @@ function App() {
             </PublicRoute>
           }
         />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
         <Route path="/reset-password-token" element={<ResetPasswordToken />} />
-        <Route path="results" element={<StudentResults />} />
-
-
-        <Route
-          path="/reset-password"
-          element={<ResetPassword />}
-        />
-
-
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/admin"
@@ -57,14 +48,11 @@ function App() {
         >
           <Route index element={<StudentDashboard />} />
           <Route path="quizzes" element={<StudentQuiz />} />
-
           <Route path="results" element={<StudentResults />} />
           <Route path="results/:quizId" element={<StudentResultView />} />
-
         </Route>
-
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
